@@ -1,4 +1,13 @@
 window_days: 7
+rss:
+  enabled: true
+  feeds:
+    - name: "Geophysics"
+      url: "https://pubs.geoscienceworld.org/rss/site_143/advanceAccess_72.xml"
+    - name: "GRL"
+      url: "http://onlinelibrary.wiley.com/rss/journal/10.1002/(ISSN)1944-8007"
+    - name: "JGR"
+      url: "http://onlinelibrary.wiley.com/rss/journal/10.1002/(ISSN)2169-9356"
 openalex:
   enabled: false
   mailto: "you@example.com"

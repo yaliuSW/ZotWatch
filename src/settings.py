@@ -50,6 +50,16 @@ class OpenAlexConfig(BaseModel):
     mailto: str = "you@example.com"
 
 
+class RssFeedConfig(BaseModel):
+    name: str
+    url: str
+
+
+class RssConfig(BaseModel):
+    enabled: bool = False
+    feeds: List[RssFeedConfig] = Field(default_factory=list)
+
+
 class CrossRefConfig(BaseModel):
     enabled: bool = True
     mailto: str = "you@example.com"
@@ -72,6 +82,7 @@ class MedRxivConfig(BaseModel):
 
 class SourcesConfig(BaseModel):
     window_days: int = 30
+    rss: RssConfig = Field(default_factory=RssConfig)
     openalex: OpenAlexConfig = Field(default_factory=OpenAlexConfig)
     crossref: CrossRefConfig = Field(default_factory=CrossRefConfig)
     arxiv: ArxivConfig = Field(default_factory=ArxivConfig)

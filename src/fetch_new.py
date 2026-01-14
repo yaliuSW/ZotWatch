@@ -50,6 +50,8 @@ class CandidateFetcher:
 
         if self.settings.sources.openalex.enabled:
             results.extend(self._fetch_openalex(since))
+        if self.settings.sources.rss.enabled:
+            results.extend(self._fetch_rss(since))
         if self.settings.sources.crossref.enabled:
             results.extend(self._fetch_crossref(since))
             results.extend(self._fetch_crossref_top_venues(since))
@@ -286,6 +288,43 @@ class CandidateFetcher:
                     extra={"primary_category": entry.get("arxiv_primary_category", {}).get("term")},
                 )
             )
+        return results
+
+    def _fetch_rss(self, since: datetime) -> List[CandidateWork]:
+        feeds = self.settings.sources.rss.feeds
+        if not feeds:
+            return []
+        results: List[CandidateWork] = []
+        for feed in feeds:
+            logger.info("Fetching RSS feed %s (%s)", feed.name, feed.url)
+            try:
+                resp = self.session.get(feed.url, timeout=30)
+                resp.raise_for_status()
+            except Exception as exc:
+                logger.warning("Failed to fetch RSS feed %s: %s", feed.url, exc)
+                continue
+            parsed = feedparser.parse(resp.text)
+            for entry in parsed.entries:
+                title = _clean_title(entry.get("title"))
+                if not title:
+                    continue
+                published = _parse_date(entry.get("published") or entry.get("updated"))
+                if published and published < since:
+                    continue
+                identifier = entry.get("id") or entry.get("guid") or entry.get("link") or title
+                results.append(
+                    CandidateWork(
+                        source="rss",
+                        identifier=identifier,
+                        title=title,
+                        abstract=(entry.get("summary") or entry.get("description") or "").strip() or None,
+                        authors=[a.get("name") for a in entry.get("authors", []) if a.get("name")],
+                        url=entry.get("link"),
+                        published=published,
+                        venue=feed.name,
+                        extra={"feed_url": feed.url},
+                    )
+                )
         return results
 
     def _fetch_biorxiv(self, window_days: int, medrxiv: bool = False) -> List[CandidateWork]:
